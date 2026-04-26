@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnapLens AI — See. Think. Answer.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #09090f;
+    --surface: #111118;
+    --surface2: #1a1a26;
+    --border: rgba(255,255,255,0.07);
+    --green: #00ff87;
+    --green-dim: rgba(0,255,135,0.12);
+    --green-glow: rgba(0,255,135,0.35);
+    --text: #f0f0f8;
+    --muted: #6b6b80;
+    --accent: #7c6aff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; line-height: 1.15; }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    background: rgba(9,9,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .logo-dot {
+    width: 28px; height: 28px;
+    background: var(--green);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 16px var(--green-glow);
+    flex-shrink: 0;
+  }
+
+  .logo-dot::after {
+    content: '';
+    width: 8px; height: 8px;
+    background: #09090f;
+    border-radius: 50%;
+  }
+
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-cta { display: flex; gap: 12px; align-items: center; }
+
+  .btn-ghost {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all .2s;
+    text-decoration: none;
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+  .btn-primary {
+    background: var(--green);
+    color: #050a00;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all .2s;
+    text-decoration: none;
+    box-shadow: 0 0 24px var(--green-glow);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 32px var(--green-glow); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 24px 80px;
+    position: relative;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px; height: 400px;
+    background: radial-gradient(ellipse at center, rgba(0,255,135,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--green-dim);
+    border: 1px solid rgba(0,255,135,0.25);
+    color: var(--green);
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 32px;
+    animation: fadeUp .6s ease both;
+  }
+
+  .hero-badge-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero h1 {
+    font-size: clamp(48px, 7vw, 88px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    max-width: 900px;
+    animation: fadeUp .6s .1s ease both;
+    line-height: 1.05;
+  }
+
+  .hero h1 .highlight {
+    color: var(--green);
+    text-shadow: 0 0 40px var(--green-glow);
+  }
+
+  .hero-sub {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 540px;
+    margin: 24px auto 40px;
+    font-weight: 300;
+    animation: fadeUp .6s .2s ease both;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeUp .6s .3s ease both;
+  }
+
+  .btn-lg {
+    padding: 14px 32px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .hero-demo {
+    margin-top: 80px;
+    width: 100%;
+    max-width: 900px;
+    animation: fadeUp .8s .4s ease both;
+  }
+
+  .demo-window {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
+  }
+
+  .demo-bar {
+    background: var(--surface2);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .demo-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+  .demo-body {
+    padding: 40px;
+    min-height: 240px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0d0d18 0%, #111122 100%);
+  }
+
+  .demo-content {
+    text-align: left;
+    max-width: 600px;
+    width: 100%;
+  }
+
+  .demo-question {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+
+  .demo-answer {
+    background: var(--green-dim);
+    border: 1px solid rgba(0,255,135,0.2);
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 15px;
+    color: var(--text);
+    position: relative;
+  }
+
+  .demo-answer::before {
+    content: 'SnapLens AI';
+    position: absolute;
+    top: -10px; left: 16px;
+    background: var(--green);
+    color: #050a00;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .snaplens-dot-demo {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    width: 42px; height: 42px;
+    background: var(--green);
+    border-radius: 10px;
+    box-shadow: 0 0 20px var(--green-glow);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    animation: floatDot 3s ease-in-out infinite;
+  }
+
+  .snaplens-dot-demo::after {
+    content: '';
+    width: 12px; height: 12px;
+    background: #050a00;
+    border-radius: 50%;
+  }
+
+  @keyframes floatDot {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  /* ── FEATURES ── */
+  section { position: relative; z-index: 1; }
+
+  .section-label {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--green);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .section-title {
+    text-align: center;
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+
+  .section-sub {
+    text-align: center;
+    color: var(--muted);
+    max-width: 480px;
+    margin: 0 auto 64px;
+  }
+
+  .features {
+    padding: 120px 48px;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .feature-card {
+    background: var(--surface);
+    padding: 40px 36px;
+    transition: background .2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card:hover { background: var(--surface2); }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+
+  .feature-card:hover::before { opacity: 1; }
+
+  .feature-icon {
+    width: 44px; height: 44px;
+    background: var(--green-dim);
+    border: 1px solid rgba(0,255,135,0.2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    font-size: 20px;
+  }
+
+  .feature-card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+  }
+
+  .feature-card p {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how {
+    padding: 120px 48px;
+    background: linear-gradient(180deg, transparent 0%, rgba(0,255,135,0.02) 50%, transparent 100%);
+  }
+
+  .steps {
+    display: flex;
+    max-width: 900px;
+    margin: 0 auto;
+    gap: 0;
+    position: relative;
+  }
+
+  .steps::before {
+    content: '';
+    position: absolute;
+    top: 32px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), var(--green), var(--border), transparent);
+  }
+
+  .step {
+    flex: 1;
+    text-align: center;
+    padding: 0 24px;
+  }
+
+  .step-num {
+    width: 64px; height: 64px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--green);
+    position: relative;
+    z-index: 1;
+  }
+
+  .step h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .step p { font-size: 13px; color: var(--muted); }
+
+  /* ── PRICING ── */
+  .pricing {
+    padding: 120px 48px;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .plan {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    position: relative;
+    transition: transform .2s, border-color .2s;
+  }
+
+  .plan:hover { transform: translateY(-4px); }
+
+  .plan.popular {
+    border-color: rgba(0,255,135,0.4);
+    background: linear-gradient(160deg, #0e1a14 0%, var(--surface) 100%);
+  }
+
+  .popular-badge {
+    position: absolute;
+    top: -12px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--green);
+    color: #050a00;
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 14px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .plan-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .plan-price {
+    font-family: 'Syne', sans-serif;
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .plan-price span {
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--muted);
+    letter-spacing: 0;
+  }
+
+  .plan-period { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+
+  .plan-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 24px;
+  }
+
+  .plan-features { list-style: none; margin-bottom: 32px; }
+
+  .plan-features li {
+    font-size: 14px;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+  }
+
+  .plan-features li.active { color: var(--text); }
+
+  .check {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+  }
+
+  .check.yes { background: var(--green-dim); color: var(--green); }
+  .check.no { background: rgba(255,255,255,0.04); color: var(--muted); }
+
+  .btn-plan {
+    width: 100%;
+    padding: 13px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all .2s;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text);
+  }
+
+  .btn-plan:hover { border-color: rgba(255,255,255,0.2); background: var(--surface2); }
+
+  .btn-plan.green {
+    background: var(--green);
+    color: #050a00;
+    border: none;
+    box-shadow: 0 0 24px var(--green-glow);
+  }
+
+  .btn-plan.green:hover { transform: translateY(-1px); box-shadow: 0 4px 32px var(--green-glow); }
+
+  /* ── CTA STRIP ── */
+  .cta-strip {
+    margin: 40px 48px 120px;
+    background: linear-gradient(135deg, #0e1a14 0%, #0a0d18 100%);
+    border: 1px solid rgba(0,255,135,0.15);
+    border-radius: 24px;
+    padding: 80px 48px;
+    text-align: center;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-strip::before {
+    content: '';
+    position: absolute;
+    top: -80px; left: 50%;
+    transform: translateX(-50%);
+    width: 400px; height: 300px;
+    background: radial-gradient(ellipse, rgba(0,255,135,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cta-strip h2 { font-size: clamp(28px, 3.5vw, 48px); font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; }
+  .cta-strip p { color: var(--muted); margin-bottom: 32px; }
+
+  /* ── AFFILIATE SECTION ── */
+  .affiliate-section { padding: 120px 48px; border-top: 1px solid var(--border); }
+  .affiliate-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 420px; gap: 80px; align-items: center;
+  }
+  .affiliate-stats { display: flex; align-items: center; gap: 24px; }
+  .aff-stat-num { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: var(--green); line-height: 1; margin-bottom: 4px; }
+  .aff-stat-label { font-size: 13px; color: var(--muted); }
+  .aff-stat-div { width: 1px; height: 48px; background: var(--border); }
+  .aff-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+  .aff-card-head { padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .aff-step { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px; border-bottom: 1px solid var(--border); }
+  .aff-step-num {
+    width: 28px; height: 28px; background: var(--green-dim); border: 1px solid rgba(0,255,135,0.2);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800; color: var(--green); flex-shrink: 0;
+  }
+  .aff-step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .aff-step-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .aff-example { padding: 20px 24px; }
+  .aff-example-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 14px; color: var(--muted); }
+
+  /* ── FOOTER ── */
+  footer { border-top: 1px solid var(--border); padding: 64px 48px 0; }
+  .footer-inner {
+    display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 48px;
+    max-width: 1200px; margin: 0 auto; padding-bottom: 48px;
+  }
+  .footer-brand { display: flex; flex-direction: column; }
+  .footer-tagline { color: var(--muted); font-size: 13px; line-height: 1.65; margin-bottom: 16px; }
+  .footer-copy { color: rgba(107,107,128,0.5); font-size: 12px; margin-top: auto; }
+  .footer-col { display: flex; flex-direction: column; gap: 12px; }
+  .footer-col-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text); margin-bottom: 4px; }
+  .footer-link { color: var(--muted); text-decoration: none; font-size: 14px; transition: color .2s; display: flex; align-items: center; gap: 8px; width: fit-content; }
+  .footer-link:hover { color: var(--text); }
+  .footer-link-highlight { color: var(--text) !important; }
+  .earn-badge { background: var(--green); color: #050a00; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; font-family: 'Syne', sans-serif; }
+  .footer-bottom { border-top: 1px solid var(--border); padding: 20px 0; max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: rgba(107,107,128,0.6); }
+  .footer-bottom-links { display: flex; gap: 24px; }
+  .footer-bottom-links a { color: rgba(107,107,128,0.6); text-decoration: none; font-size: 12px; transition: color .2s; }
+  .footer-bottom-links a:hover { color: var(--muted); }
+  .legal-doc h2 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .legal-doc .legal-date { font-size: 12px; color: var(--muted); margin-bottom: 28px; }
+  .legal-doc h3 { font-size: 15px; font-weight: 700; margin: 24px 0 8px; }
+  .legal-doc p { font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 12px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    transform: translateY(20px);
+    transition: transform .25s;
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    transition: color .2s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .modal h2 {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+
+  .modal p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+  .form-group { margin-bottom: 16px; }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .form-group input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .form-group input:focus { border-color: rgba(0,255,135,0.4); }
+
+  .form-group input::placeholder { color: var(--muted); }
+
+  .modal-submit {
+    width: 100%;
+    padding: 13px;
+    background: var(--green);
+    color: #050a00;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    transition: all .2s;
+    margin-top: 8px;
+    box-shadow: 0 0 24px var(--green-glow);
+  }
+
+  .modal-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 32px var(--green-glow); }
+
+  .modal-switch {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .modal-switch a { color: var(--green); text-decoration: none; cursor: pointer; }
+
+  .tabs {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 24px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 9px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all .2s;
+    color: var(--muted);
+    border: none;
+    background: none;
+  }
+
+  .tab.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  .msg {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .msg.success { background: var(--green-dim); border: 1px solid rgba(0,255,135,0.3); color: var(--green); display: block; }
+  .msg.error { background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.3); color: #ff8080; display: block; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+    .steps { flex-direction: column; gap: 32px; }
+    .steps::before { display: none; }
+    .features, .how, .pricing, .affiliate-section { padding: 80px 24px; }
+    .affiliate-inner { grid-template-columns: 1fr; gap: 40px; }
+    .footer-inner { grid-template-columns: 1fr 1fr; gap: 32px; padding: 0 24px 40px; }
+    footer { padding: 48px 0 0; }
+    .footer-bottom { margin: 0 24px; }
+    .affiliate-stats { flex-wrap: wrap; gap: 16px; }
+  }
+  @media (max-width: 600px) {
+    .footer-inner { grid-template-columns: 1fr; padding: 0 24px 32px; }
+    .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+  }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-dot"></div>
+    SnapLens AI
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#affiliate" style="color:var(--green)">Affiliates</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a class="btn-ghost" href="#" onclick="openModal('login'); return false;">Log in</a>
+    <a class="btn-primary" href="#" onclick="openModal('register'); return false;">Get started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">
+    <div class="hero-badge-dot"></div>
+    AI-powered screen intelligence
+  </div>
+  <h1>See anything.<br>Get the <span class="highlight">answer.</span></h1>
+  <p class="hero-sub">SnapLens AI sits quietly in your browser. One click takes a screenshot — AI reads it, understands it, and answers instantly.</p>
+  <div class="hero-cta">
+    <a class="btn-primary btn-lg" href="#" onclick="openModal('register'); return false;">Start for free</a>
+    <a class="btn-ghost btn-lg" href="#how">See how it works</a>
+  </div>
+
+  <div class="hero-demo">
+    <div class="demo-window">
+      <div class="demo-bar">
+        <div class="demo-dot" style="background:#ff5f57"></div>
+        <div class="demo-dot" style="background:#ffbd2e"></div>
+        <div class="demo-dot" style="background:#28c840"></div>
+        <div style="flex:1; background:rgba(255,255,255,0.05); height:28px; border-radius:6px; margin-left:12px;"></div>
+      </div>
+      <div class="demo-body">
+        <div class="demo-content">
+          <div class="demo-question">📋 On-screen: "Which of the following is NOT a primary color? A) Red  B) Green  C) Orange  D) Blue"</div>
+          <div class="demo-answer">
+            The correct answer is <strong>C) Orange</strong>. The three primary colors in traditional color theory are Red, Yellow, and Blue — orange is a secondary color created by mixing red and yellow.
+          </div>
+        </div>
+        <div class="snaplens-dot-demo"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-label">Features</div>
+  <h2 class="section-title">Everything you need</h2>
+  <p class="section-sub">A complete AI assistant that works with whatever is on your screen.</p>
+
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <div class="feature-icon">📸</div>
+      <h3>One-click screenshots</h3>
+      <p>A tiny floating dot sits in your corner. Click it. SnapLens captures what's on screen and sends it to AI instantly.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎓</div>
+      <h3>Exam mode</h3>
+      <p>Detects MCQ, short-answer, and fill-in-the-blank questions. Gives you the right answer with a clear explanation.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌐</div>
+      <h3>Your language</h3>
+      <p>Set any language and all answers come back in it — no matter what language the content on screen is in.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🖼️</div>
+      <h3>Understands images too</h3>
+      <p>Charts, diagrams, photos — not just text. The AI describes and interprets anything visible on your screen.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>Instant answers</h3>
+      <p>Responses appear right where the dot was. No new tabs, no context switching. The square expands to fit the answer.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎛️</div>
+      <h3>Fully customizable</h3>
+      <p>Control answer length, AI mode, dot position, and dot size — all adjustable from the extension popup anytime.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="section-label">How it works</div>
+  <h2 class="section-title">Up and running in minutes</h2>
+  <p class="section-sub">Four simple steps from zero to AI-powered screen intelligence.</p>
+
+  <div class="steps reveal">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>Sign up</h4>
+      <p>Create your account — free to start, upgrade to Premium anytime.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>Install</h4>
+      <p>Download the Chrome extension and add it to your browser.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>Log in</h4>
+      <p>Authenticate inside the extension to link your subscription.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h4>Click the dot</h4>
+      <p>Green dot → screenshot → AI answer. That's it. Every time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-label">Pricing</div>
+  <h2 class="section-title">Simple, transparent pricing</h2>
+  <p class="section-sub">Start free, upgrade when you need more power.</p>
+
+  <div class="pricing-grid reveal" style="grid-template-columns:repeat(2,1fr);max-width:700px">
+    <!-- FREE -->
+    <div class="plan">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">€0<span>/mo</span></div>
+      <div class="plan-period">No credit card needed</div>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li class="active"><div class="check yes">✓</div> 3 scans / day</li>
+        <li class="active"><div class="check yes">✓</div> Short answers only</li>
+        <li class="active"><div class="check yes">✓</div> Exam + General mode</li>
+        <li class="active"><div class="check yes">✓</div> Any language</li>
+        <li><div class="check no">—</div> Medium / long answers</li>
+        <li><div class="check no">—</div> Faster AI processing</li>
+      </ul>
+      <button class="btn-plan" onclick="openModal('register')">Get started free</button>
+    </div>
+
+    <!-- PREMIUM -->
+    <div class="plan popular">
+      <div class="popular-badge">Best value</div>
+      <div class="plan-name">Premium</div>
+      <div class="plan-price">€9.99<span>/mo</span></div>
+      <div class="plan-period">Cancel anytime</div>
+      <div class="plan-divider"></div>
+      <ul class="plan-features">
+        <li class="active"><div class="check yes">✓</div> 50 scans / day</li>
+        <li class="active"><div class="check yes">✓</div> Short, medium & long answers</li>
+        <li class="active"><div class="check yes">✓</div> Exam + General mode</li>
+        <li class="active"><div class="check yes">✓</div> Any language</li>
+        <li class="active"><div class="check yes">✓</div> Faster AI processing</li>
+        <li class="active"><div class="check yes">✓</div> Priority support</li>
+      </ul>
+      <button class="btn-plan green" onclick="openModal('register')">Start Premium — €9.99/mo</button>
+    </div>
+  </div>
+</section>
+
+<!-- CTA STRIP -->
+<div class="cta-strip reveal">
+  <h2>Your screen already has all the answers.<br>Let AI find them.</h2>
+  <p>Join thousands of students and professionals using SnapLens AI every day.</p>
+  <a class="btn-primary btn-lg" href="#" onclick="openModal('register'); return false;">Get started — it's free</a>
+</div>
+
+<!-- AFFILIATE SECTION -->
+<section class="affiliate-section reveal" id="affiliate">
+  <div class="affiliate-inner">
+    <div>
+      <div class="section-label" style="text-align:left;margin-bottom:12px">Affiliate Program</div>
+      <h2 style="font-size:clamp(28px,3.5vw,46px);font-weight:800;letter-spacing:-1px;margin-bottom:16px;line-height:1.1">Earn <span style="color:var(--green)">10%</span> every month.<br>For every user you send.</h2>
+      <p style="color:var(--muted);max-width:440px;margin-bottom:32px;font-size:15px">Share your unique referral link. Every time someone signs up through it and pays for Premium, you get 10% of their subscription &mdash; every month, for as long as they stay subscribed.</p>
+      <div class="affiliate-stats">
+        <div class="aff-stat"><div class="aff-stat-num">10%</div><div class="aff-stat-label">Monthly commission</div></div>
+        <div class="aff-stat-div"></div>
+        <div class="aff-stat"><div class="aff-stat-num">&infin;</div><div class="aff-stat-label">No referral cap</div></div>
+        <div class="aff-stat-div"></div>
+        <div class="aff-stat"><div class="aff-stat-num">&euro;0</div><div class="aff-stat-label">Free to join</div></div>
+      </div>
+      <button class="btn-primary btn-lg" style="margin-top:32px" onclick="openModal('register')">Join the affiliate program</button>
+    </div>
+    <div>
+      <div class="aff-card">
+        <div class="aff-card-head"><span style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--green)">How it works</span></div>
+        <div class="aff-step">
+          <div class="aff-step-num">1</div>
+          <div><div class="aff-step-title">Sign up &amp; get your link</div><div class="aff-step-desc">Create a free account and find your unique referral URL in your dashboard.</div></div>
+        </div>
+        <div class="aff-step">
+          <div class="aff-step-num">2</div>
+          <div><div class="aff-step-title">Share it anywhere</div><div class="aff-step-desc">Post on social media, YouTube, Discord, your blog &mdash; wherever your audience is.</div></div>
+        </div>
+        <div class="aff-step">
+          <div class="aff-step-num">3</div>
+          <div><div class="aff-step-title">Earn recurring income</div><div class="aff-step-desc">Every paying referral earns you 10% each month. Each Premium user = &euro;1/mo in your pocket, forever.</div></div>
+        </div>
+        <div class="aff-example">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;font-weight:600">Example earnings</div>
+          <div class="aff-example-row"><span>10 Premium users</span><span style="color:var(--green);font-weight:700">+&euro;10/mo</span></div>
+          <div class="aff-example-row"><span>20 Premium users</span><span style="color:var(--green);font-weight:700">+&euro;20/mo</span></div>
+          <div class="aff-example-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px">
+            <span style="font-weight:600;color:var(--text)">50 referrals</span>
+            <span style="color:var(--green);font-weight:800;font-size:18px">&euro;30/mo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a class="logo" href="#" style="margin-bottom:14px;display:inline-flex;text-decoration:none;color:var(--text)">
+        <div class="logo-dot"></div>SnapLens AI
+      </a>
+      <p class="footer-tagline">AI-powered screen intelligence.<br>See anything. Get the answer.</p>
+      <p class="footer-copy">&copy; 2025 SnapLens AI. All rights reserved.</p>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Product</div>
+      <a href="#features" class="footer-link">Features</a>
+      <a href="#how" class="footer-link">How it works</a>
+      <a href="#pricing" class="footer-link">Pricing</a>
+      <a href="#" class="footer-link" onclick="openModal('register');return false;">Download Extension</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Earn</div>
+      <a href="#affiliate" class="footer-link footer-link-highlight">Affiliates <span class="earn-badge">Earn 10%</span></a>
+      <a href="#" class="footer-link" onclick="openModal('register');return false;">Join Program</a>
+      <a href="#" class="footer-link" onclick="openAffModal();return false;">Affiliate Dashboard</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Legal</div>
+      <a href="#" class="footer-link" onclick="openLegal('terms');return false;">Terms of Service</a>
+      <a href="#" class="footer-link" onclick="openLegal('privacy');return false;">Privacy Policy</a>
+      <a href="#" class="footer-link" onclick="openLegal('affiliate-terms');return false;">Affiliate Terms</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2025 SnapLens AI</span>
+    <div class="footer-bottom-links">
+      <a href="#" onclick="openLegal('terms');return false;">Terms</a>
+      <a href="#" onclick="openLegal('privacy');return false;">Privacy</a>
+      <a href="#" onclick="openLegal('affiliate-terms');return false;">Affiliate Terms</a>
+    </div>
+  </div>
+</footer>
+
+<!-- LEGAL MODAL -->
+<div class="modal-overlay" id="legal-modal" onclick="if(event.target===this)closeLegal()">
+  <div class="modal" style="max-width:600px;max-height:80vh;overflow-y:auto;padding:40px">
+    <button class="modal-close" onclick="closeLegal()">&times;</button>
+    <div id="legal-content"></div>
+  </div>
+</div>
+
+<!-- AFFILIATE DASHBOARD MODAL -->
+<div class="modal-overlay" id="aff-modal" onclick="if(event.target===this)closeAffModal()">
+  <div class="modal" style="max-width:520px;padding:0;overflow:hidden;border-radius:20px">
+    <div style="background:var(--surface2);padding:24px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:2px">Affiliate Dashboard</div>
+        <div style="font-size:13px;color:var(--muted)">Your referral earnings</div>
+      </div>
+      <button class="modal-close" style="position:static" onclick="closeAffModal()">&times;</button>
+    </div>
+    <div style="padding:28px 32px">
+      <div style="margin-bottom:24px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Your referral link</div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--text);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">snaplens.ai?ref=<span id="aff-code" style="color:var(--green)">...</span></div>
+          <button onclick="copyAffLink()" style="background:var(--green-dim);border:1px solid rgba(0,255,135,0.2);color:var(--green);padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit" id="copy-btn">Copy</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--green)" id="aff-stat-referrals">0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Referrals</div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--green)" id="aff-stat-earned">&euro;0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Total earned</div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text)" id="aff-stat-available">&euro;0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Available</div>
+        </div>
+      </div>
+      <div style="background:linear-gradient(135deg,#0e1a14,var(--surface2));border:1px solid rgba(0,255,135,0.15);border-radius:12px;padding:20px;margin-bottom:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:14px;font-weight:600">Withdraw earnings</div>
+          <div style="font-size:12px;color:var(--muted)">Min. &euro;20</div>
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px" id="aff-withdraw-note">Earn at least &euro;20 to request a withdrawal.</div>
+        <button id="aff-withdraw-btn" onclick="requestWithdraw()" style="width:100%;padding:11px;background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:14px;font-weight:600;cursor:not-allowed;font-family:inherit" disabled>Request withdrawal</button>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Recent commissions</div>
+        <div id="aff-commissions" style="font-size:13px;color:var(--muted);text-align:center;padding:20px 0">No commissions yet. Share your link to start earning!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-login" onclick="switchTab('login')">Log in</button>
+      <button class="tab" id="tab-register" onclick="switchTab('register')">Sign up</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="form-login">
+      <h2>Welcome back</h2>
+      <p>Log in to access your SnapLens AI extension.</p>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••">
+      </div>
+      <button class="modal-submit" onclick="handleLogin()">Log in</button>
+      <div class="modal-switch">Don't have an account? <a onclick="switchTab('register')">Sign up</a></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="form-register" style="display:none">
+      <h2>Create account</h2>
+      <p>Start free. No credit card required.</p>
+      <div class="form-group">
+        <label>Full name</label>
+        <input type="text" id="reg-name" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" placeholder="Min. 8 characters">
+      </div>
+      <button class="modal-submit" onclick="handleRegister()">Create account</button>
+      <div class="modal-switch">Already have an account? <a onclick="switchTab('login')">Log in</a></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://snaplens-backend-production.up.railway.app";
+
+  // ── SCROLL REVEAL ──
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // ── MODAL ──
+  function openModal(tab) {
+    document.getElementById('modal').classList.add('open');
+    switchTab(tab || 'register');
+    document.getElementById('msg').className = 'msg';
+    document.getElementById('msg').textContent = '';
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    updateNavAuth();
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modal')) closeModal();
+  }
+
+  function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('form-login').style.display = isLogin ? '' : 'none';
+    document.getElementById('form-register').style.display = isLogin ? 'none' : '';
+    document.getElementById('tab-login').classList.toggle('active', isLogin);
+    document.getElementById('tab-register').classList.toggle('active', !isLogin);
+    document.getElementById('msg').className = 'msg';
+    document.getElementById('msg').textContent = '';
+  }
+
+  function showMsg(text, type) {
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.className = 'msg ' + type;
+  }
+
+  // ── DEMO ONLY — replace with real backend calls ──
+  async function handleLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-password').value;
+    if (!email || !pass) return showMsg('Please fill in all fields.', 'error');
+    showMsg('Logging in…', 'success');
+    try {
+      const res = await fetch(API_URL + '/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+      const data = await res.json();
+      if (!res.ok) return showMsg(data.error || 'Login failed. Check your email and password.', 'error');
+      localStorage.setItem('snaplens_token', data.token);
+      localStorage.setItem('snaplens_user', JSON.stringify(data.user));
+      showMsg('✓ Logged in! Welcome back, ' + data.user.name + '.', 'success');
+      setTimeout(closeModal, 1400);
+    } catch (err) {
+      showMsg('Could not reach server. Try again.', 'error');
+    }
+  }
+
+  async function handleRegister() {
+    const name  = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pass  = document.getElementById('reg-password').value;
+    if (!name || !email || !pass) return showMsg('Please fill in all fields.', 'error');
+    if (pass.length < 8) return showMsg('Password must be at least 8 characters.', 'error');
+    showMsg('Creating account…', 'success');
+    const referralCode = sessionStorage.getItem('snaplens_ref') || null;
+    try {
+      const res = await fetch(API_URL + '/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password: pass, referralCode })
+      });
+      const data = await res.json();
+      if (!res.ok) return showMsg(data.error || 'Registration failed.', 'error');
+      localStorage.setItem('snaplens_token', data.token);
+      localStorage.setItem('snaplens_user', JSON.stringify(data.user));
+      sessionStorage.removeItem('snaplens_ref');
+      showMsg('✓ Account created! Welcome, ' + data.user.name + '.', 'success');
+      setTimeout(closeModal, 1400);
+    } catch (err) {
+      showMsg('Could not reach server. Try again.', 'error');
+    }
+  }
+
+  // ── LEGAL MODAL ──
+  const LEGAL = {
+    terms: {
+      title: 'Terms of Service',
+      date: 'Effective: January 1, 2025',
+      sections: [
+        { h: '1. Acceptance of Terms', p: 'By accessing or using SnapLens AI, you agree to be bound by these Terms of Service. If you do not agree, do not use the service.' },
+        { h: '2. Description of Service', p: 'SnapLens AI provides a browser extension that captures screenshots and uses AI to analyze on-screen content. The service is provided "as is" and may change at any time.' },
+        { h: '3. User Accounts', p: 'You must provide accurate information when creating an account. You are responsible for maintaining the security of your account credentials.' },
+        { h: '4. Subscriptions & Payments', p: 'Paid plans are billed monthly via Stripe. Cancellations take effect at the end of the billing period. No partial refunds are issued.' },
+        { h: '5. Acceptable Use', p: 'You may not use SnapLens AI to violate any laws, infringe on intellectual property rights, or interfere with academic integrity policies at your institution.' },
+        { h: '6. Limitation of Liability', p: 'SnapLens AI is not liable for any direct, indirect, or consequential damages arising from your use of the service.' },
+        { h: '7. Changes to Terms', p: 'We may update these terms at any time. Continued use of the service constitutes acceptance of the revised terms.' },
+        { h: '8. Contact', p: 'For questions about these terms, contact us at legal@snaplens.ai' }
+      ]
+    },
+    privacy: {
+      title: 'Privacy Policy',
+      date: 'Effective: January 1, 2025',
+      sections: [
+        { h: '1. Data We Collect', p: 'We collect your name, email address, and payment information. When you use the extension, screenshots are temporarily processed by our AI and are not stored after the response is delivered.' },
+        { h: '2. How We Use Your Data', p: 'Your data is used to provide the service, manage your subscription, and improve our product. We do not sell your personal data to third parties.' },
+        { h: '3. Screenshot Processing', p: 'Screenshots are sent to our servers over encrypted HTTPS connections, processed by the AI model, and immediately discarded. We do not retain screenshot content.' },
+        { h: '4. Cookies', p: 'We use essential cookies for authentication. We do not use tracking or advertising cookies.' },
+        { h: '5. Third-Party Services', p: 'We use Stripe for payment processing and Anthropic for AI processing. Both are bound by their own privacy policies.' },
+        { h: '6. Data Retention', p: 'Account data is retained as long as your account is active. You may request deletion at any time by contacting support.' },
+        { h: '7. Your Rights', p: 'Depending on your jurisdiction, you may have rights to access, correct, or delete your data. Contact privacy@snaplens.ai to exercise these rights.' },
+        { h: '8. Contact', p: 'For privacy concerns, email privacy@snaplens.ai' }
+      ]
+    },
+    'affiliate-terms': {
+      title: 'Affiliate Program Terms',
+      date: 'Effective: January 1, 2025',
+      sections: [
+        { h: '1. Program Overview', p: 'The SnapLens AI Affiliate Program allows registered users to earn a 10% recurring commission on payments made by users they refer to the Premium plan.' },
+        { h: '2. Eligibility', p: 'Any registered SnapLens AI user may participate. You must have a valid account in good standing to receive commissions.' },
+        { h: '3. Referral Tracking', p: 'Each affiliate receives a unique referral code and link. When a new user registers using your referral code and purchases a paid plan, they are permanently linked to your account.' },
+        { h: '4. Commission Structure', p: 'You earn 10% of each subscription payment made by referred users. Premium referrals earn ~€1.00/mo per user for as long as they remain subscribed. Commissions are calculated after payment processing fees.' },
+        { h: '5. Payment of Commissions', p: 'Commissions are paid monthly via bank transfer or PayPal once your balance reaches €20. Payments are issued within 30 days of the end of each calendar month.' },
+        { h: '6. Prohibited Activities', p: 'You may not use spam, misleading advertising, cookie stuffing, or any deceptive method to generate referrals. Violations result in immediate termination and forfeiture of unpaid commissions.' },
+        { h: '7. Modification & Termination', p: 'SnapLens AI reserves the right to modify commission rates or terminate the affiliate program at any time with 30 days notice.' },
+        { h: '8. Contact', p: 'For affiliate questions, contact affiliates@snaplens.ai' }
+      ]
+    }
+  };
+
+  function openLegal(type) {
+    const doc = LEGAL[type];
+    if (!doc) return;
+    let inner = '<div class="legal-doc">';
+    inner += '<h2>' + doc.title + '</h2>';
+    inner += '<div class="legal-date">' + doc.date + '</div>';
+    doc.sections.forEach(s => {
+      inner += '<h3>' + s.h + '</h3><p>' + s.p + '</p>';
+    });
+    inner += '</div>';
+    document.getElementById('legal-content').innerHTML = inner;
+    document.getElementById('legal-modal').classList.add('open');
+  }
+
+  function closeLegal() {
+    document.getElementById('legal-modal').classList.remove('open');
+  }
+
+  // ── REFERRAL CODE from URL ──
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      sessionStorage.setItem('snaplens_ref', ref.toUpperCase());
+    }
+  })();
+
+  // Close modals on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal(); closeLegal(); closeAffModal(); }
+  });
+
+  // ── AFFILIATE DASHBOARD ──
+  async function openAffModal() {
+    const token = localStorage.getItem("snaplens_token");
+    if (!token) { openModal("login"); return; }
+    document.getElementById('aff-modal').classList.add('open');
+    loadAffStats();
+  }
+
+  function closeAffModal() {
+    document.getElementById('aff-modal').classList.remove('open');
+  }
+
+  async function loadAffStats() {
+    const token = localStorage.getItem("snaplens_token");
+    if (!token) return;
+    try {
+      const res = await fetch(API_URL + "/api/affiliate/stats", {
+        headers: { Authorization: "Bearer " + token }
+      });
+      if (res.status === 401) {
+        localStorage.removeItem("snaplens_token");
+        closeAffModal();
+        openModal("login");
+        return;
+      }
+      const data = await res.json();
+      renderAffStats(data);
+    } catch (err) {
+      console.error("Affiliate stats error:", err);
+    }
+  }
+
+  function renderAffStats(data) {
+    // Backend returns: referral_code, total_referrals, total_earned_cents, available_cents, recent_commissions
+    document.getElementById('aff-code').textContent = data.referral_code || data.code || '---';
+    document.getElementById('aff-stat-referrals').textContent = data.total_referrals ?? data.referrals ?? 0;
+    document.getElementById('aff-stat-earned').textContent = '€' + ((data.total_earned_cents || 0) / 100).toFixed(2);
+    const avail = (data.available_cents || 0) / 100;
+    document.getElementById('aff-stat-available').textContent = '€' + avail.toFixed(2);
+    const btn = document.getElementById('aff-withdraw-btn');
+    const note = document.getElementById('aff-withdraw-note');
+    if (avail >= 20) {
+      btn.disabled = false;
+      btn.style.cssText = 'width:100%;padding:11px;background:var(--green);border:none;color:#050a00;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 0 20px rgba(0,255,135,0.3)';
+      note.textContent = 'You can withdraw €' + avail.toFixed(2) + ' now.';
+    } else {
+      note.textContent = 'Earn €' + (20 - avail).toFixed(2) + ' more to unlock withdrawal.';
+    }
+    const commEl = document.getElementById('aff-commissions');
+    const comms = data.recent_commissions || data.commissions || [];
+    if (comms.length) {
+      commEl.innerHTML = comms.map(c =>
+        '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">' +
+        '<div><div style="font-size:13px;color:var(--text)">Premium subscriber</div>' +
+        '<div style="font-size:11px;color:var(--muted)">' + (c.date || '') + (c.from_user ? ' · ' + c.from_user : '') + '</div></div>' +
+        '<div style="color:var(--green);font-weight:700">+€' + parseFloat(c.amount_euros || c.amount || 1).toFixed(2) + '</div></div>'
+      ).join('');
+    } else {
+      commEl.textContent = 'No commissions yet. Share your link to start earning!';
+    }
+  }
+
+  function copyAffLink() {
+    const code = document.getElementById('aff-code').textContent;
+    navigator.clipboard.writeText('https://snaplens.ai?ref=' + code).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+
+  function requestWithdraw() {
+    // TODO: POST /api/affiliate/withdraw
+    closeAffModal();
+    setTimeout(() => alert('Withdrawal request sent! We’ll process it within 5 business days.'), 100);
+  }
+
+  // ── DASHBOARD ──
+  function openDashboard() {
+    document.getElementById('dashboard').classList.add('open');
+    loadDashboard();
+  }
+  function closeDashboard() {
+    document.getElementById('dashboard').classList.remove('open');
+  }
+
+  async function loadDashboard() {
+    const token = localStorage.getItem('snaplens_token');
+    const userRaw = localStorage.getItem('snaplens_user');
+    if (!token || !userRaw) return;
+    const user = JSON.parse(userRaw);
+    document.getElementById('dash-avatar').textContent = (user.name || '?')[0].toUpperCase();
+    document.getElementById('dash-name').textContent = user.name || '';
+    document.getElementById('dash-email').textContent = user.email || '';
+    const plan = user.plan || 'free';
+    const planEl = document.getElementById('dash-plan');
+    const upgradeBtn = document.getElementById('dash-upgrade-btn');
+    planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+    planEl.className = 'dash-plan-name ' + plan;
+    if (plan === 'premium') {
+      upgradeBtn.style.display = 'none';
+      document.getElementById('dash-billing').textContent = 'Premium plan — renews monthly';
+    } else {
+      upgradeBtn.style.display = '';
+      document.getElementById('dash-billing').textContent = 'Free plan — 3 scans/day';
+    }
+    try {
+      const res = await fetch(API_URL + '/api/ai/quota', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) {
+        const q = await res.json();
+        const used = q.used || 0;
+        const limit = q.limit || 3;
+        const livePlan = q.plan || plan;
+        user.plan = livePlan;
+        localStorage.setItem('snaplens_user', JSON.stringify(user));
+        planEl.textContent = livePlan.charAt(0).toUpperCase() + livePlan.slice(1);
+        planEl.className = 'dash-plan-name ' + livePlan;
+        if (livePlan === 'premium') {
+          upgradeBtn.style.display = 'none';
+          document.getElementById('dash-billing').textContent = 'Premium plan — renews monthly';
+        } else {
+          document.getElementById('dash-billing').textContent = 'Free plan — 3 scans/day';
+        }
+        const pct = Math.min(100, (used / limit) * 100);
+        const fill = document.getElementById('dash-quota-fill');
+        fill.style.width = pct + '%';
+        fill.className = 'dash-quota-fill' + (pct >= 100 ? ' full' : pct >= 70 ? ' warn' : '');
+        document.getElementById('dash-quota-label').textContent = used + ' of ' + limit + ' used today';
+        document.getElementById('dash-quota-reset').textContent = 'Resets at midnight';
+      }
+    } catch(e) { console.error('Dashboard error:', e); }
+  }
+
+  async function startUpgrade() {
+    const token = localStorage.getItem('snaplens_token');
+    if (!token) { openModal('login'); return; }
+    try {
+      const res = await fetch(API_URL + '/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert('Could not start checkout. Try again.');
+    } catch(e) { alert('Could not reach server. Try again.'); }
+  }
+
+  function logout() {
+    localStorage.removeItem('snaplens_token');
+    localStorage.removeItem('snaplens_user');
+    closeDashboard();
+    updateNavAuth();
+  }
+
+  function updateNavAuth() {
+    const loggedIn = !!localStorage.getItem('snaplens_token');
+    const l = document.getElementById('nav-login');
+    const r = document.getElementById('nav-register');
+    const d = document.getElementById('nav-dashboard');
+    if (l) l.style.display = loggedIn ? 'none' : '';
+    if (r) r.style.display = loggedIn ? 'none' : '';
+    if (d) d.style.display = loggedIn ? '' : 'none';
+  }
+
+  window.addEventListener('load', () => {
+    updateNavAuth();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('subscribed') === 'true') setTimeout(openDashboard, 500);
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal(); closeLegal(); closeAffModal(); closeDashboard(); }
+  });
+
+  // ── DASHBOARD ──
+  function openDashboard() {
+    const el = document.getElementById('dashboard-overlay');
+    if (!el) { console.error('dashboard-overlay not found'); return; }
+    el.classList.add('open');
+    loadDashboard();
+  }
+
+  function closeDashboard() {
+    const el = document.getElementById('dashboard-overlay');
+    if (el) el.classList.remove('open');
+  }
+
+  async function loadDashboard() {
+    const token = localStorage.getItem('snaplens_token');
+    const userRaw = localStorage.getItem('snaplens_user');
+    if (!token || !userRaw) return;
+    try {
+      const user = JSON.parse(userRaw);
+      const av = document.getElementById('dash-avatar');
+      const nm = document.getElementById('dash-name');
+      const em = document.getElementById('dash-email');
+      if (av) av.textContent = (user.name || '?')[0].toUpperCase();
+      if (nm) nm.textContent = user.name || '';
+      if (em) em.textContent = user.email || '';
+      const plan = user.plan || 'free';
+      const planEl = document.getElementById('dash-plan');
+      const upgradeBtn = document.getElementById('dash-upgrade-btn');
+      const billingEl = document.getElementById('dash-billing');
+      if (planEl) { planEl.textContent = plan.charAt(0).toUpperCase() + plan.slice(1); planEl.className = 'dash-plan-name ' + plan; }
+      if (upgradeBtn) upgradeBtn.style.display = plan === 'premium' ? 'none' : '';
+      if (billingEl) billingEl.textContent = plan === 'premium' ? 'Premium plan — renews monthly' : 'Free plan — 3 scans/day';
+    } catch(e) { console.error('Dashboard user error:', e); }
+    try {
+      const tok = localStorage.getItem('snaplens_token');
+      const res = await fetch(API_URL + '/api/ai/quota', { headers: { Authorization: 'Bearer ' + tok } });
+      if (res.status === 401) { logout(); return; }
+      if (res.ok) {
+        const q = await res.json();
+        const used = q.used || 0; const limit = q.limit || 3; const livePlan = q.plan || 'free';
+        const ur = localStorage.getItem('snaplens_user');
+        if (ur) { const u = JSON.parse(ur); u.plan = livePlan; localStorage.setItem('snaplens_user', JSON.stringify(u)); }
+        const pe = document.getElementById('dash-plan');
+        const ub = document.getElementById('dash-upgrade-btn');
+        const be = document.getElementById('dash-billing');
+        if (pe) { pe.textContent = livePlan.charAt(0).toUpperCase() + livePlan.slice(1); pe.className = 'dash-plan-name ' + livePlan; }
+        if (ub) ub.style.display = livePlan === 'premium' ? 'none' : '';
+        if (be) be.textContent = livePlan === 'premium' ? 'Premium plan — renews monthly' : 'Free plan — 3 scans/day';
+        const pct = Math.min(100, (used / limit) * 100);
+        const fill = document.getElementById('dash-quota-fill');
+        const lbl = document.getElementById('dash-quota-label');
+        if (fill) { fill.style.width = pct + '%'; fill.className = 'dash-quota-fill' + (pct >= 100 ? ' full' : pct >= 70 ? ' warn' : ''); }
+        if (lbl) lbl.textContent = used + ' of ' + limit + ' used today';
+        updateNavAuth();
+      }
+    } catch(e) { console.error('Dashboard quota error:', e); }
+  }
+
+  async function startUpgrade() {
+    const token = localStorage.getItem('snaplens_token');
+    if (!token) { openModal('login'); return; }
+    try {
+      const res = await fetch(API_URL + '/api/stripe/create-checkout', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert('Could not start checkout. Try again.');
+    } catch(e) { alert('Could not reach server.'); }
+  }
+
+  function logout() {
+    localStorage.removeItem('snaplens_token');
+    localStorage.removeItem('snaplens_user');
+    closeDashboard();
+    updateNavAuth();
+  }
+
+  window.addEventListener('load', function() {
+    updateNavAuth();
+    if (new URLSearchParams(window.location.search).get('subscribed') === 'true') {
+      setTimeout(openDashboard, 600);
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const overlay = document.getElementById('dashboard-overlay');
+    if (overlay) overlay.addEventListener('click', function(e) { if (e.target === this) closeDashboard(); });
+  });
+</script>
+</body>
+</html>
